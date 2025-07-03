@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DDoS Detection - Upload CSV</title>
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            background-color: #f0f2f5;
+            font-family: 'Poppins', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: auto;
+            padding: 20px;
+        }
+
+        .card {
+            background-color: #ffffff;
+            border-radius: 15px;
+            border: 1px solid #e0e0e0; /* Add border to card */
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .card-header {
+            background-color: #007bff;
+            color: #fff;
+            text-align: center;
+            padding: 2rem;
+            border-top-left-radius: 15px;
+            border-top-right-radius: 15px;
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            border-bottom: 1px solid #0056b3; /* Border bottom to separate header */
+        }
+
+        .card-body {
+            padding: 2rem;
+            background-color: #f8f9fa;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            color: #343a40;
+            font-size: 1.1rem;
+        }
+
+        .custom-file {
+            position: relative;
+            width: 100%;
+            margin-top: 15px;
+            border-radius: 8px;
+            overflow: hidden;
+            background-color: #ffffff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            border: 1px solid #e0e0e0; /* Add border to custom file input */
+        }
+
+        .custom-file:hover {
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .custom-file-input {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            z-index: 1;
+            cursor: pointer;
+        }
+
+        .custom-file-label {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            height: 60px; /* Adjust height as needed */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 15px;
+            font-size: 1rem;
+            background-color: #e9ecef;
+            color: #6c757d;
+            border-radius: 8px;
+            box-sizing: border-box;
+            border: 1px solid #e0e0e0; /* Add border to file label */
+        }
+
+        .custom-file-label:after {
+            content: 'Browse';
+            background-color: #007bff;
+            color: #fff;
+            padding: 0 20px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            height: 100%;
+            border-radius: 0 8px 8px 0;
+            cursor: pointer;
+            box-sizing: border-box;
+            border-left: 1px solid #e0e0e0; /* Border between label and button */
+        }
+
+        .custom-file-input:focus ~ .custom-file-label {
+            background-color: #dcdfe2;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #007bff, #00d2ff);
+            border: none;
+            border-radius: 8px;
+            padding: 15px;
+            width: 100%;
+            font-size: 1.3rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            transition: background 0.3s ease;
+            margin-top: 20px;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(45deg, #0056b3, #0091ea);
+        }
+
+        .flash-messages {
+            margin-top: 20px;
+        }
+
+        .flash-messages ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+
+        .flash-messages ul li {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+        }
+
+        .flash-messages ul li.success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .flash-messages ul li.error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        @media (max-width: 768px) {
+            .card-header {
+                font-size: 1.6rem;
+            }
+
+            .btn-primary {
+                font-size: 1.1rem;
+            }
+
+            .custom-file {
+                height: 50px;
+            }
+
+            .custom-file-label {
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                DDoS Detection System
+            </div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label for="file">Upload CSV File</label>
+                        <div class="custom-file">
+                            <input type="file" class="custom-file-input" id="file" name="file" required>
+                            <label class="custom-file-label" for="file">Choose file...</label>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Upload and Predict</button>
+
+                    <!-- Display flash messages -->
+                    <div class="flash-messages">
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+                            {% if messages %}
+                                <ul>
+                                    {% for category, message in messages %}
+                                        <li class="{{ category }}">{{ message }}</li>
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
+                        {% endwith %}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        // Update the label of the file input when a file is selected
+        $(".custom-file-input").on("change", function() {
+            var fileName = $(this).val().split("\\").pop();
+            $(this).siblings(".custom-file-label").addClass("selected").html(fileName);
+        });
+    </script>
+</body>
+</html>

@@ -3,114 +3,788 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prediction Results</title>
+    <title>Anomaly Detection Results | Network Traffic Analysis</title>
 
-    <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
+        :root {
+            --primary: #4361ee;
+            --primary-dark: #3a0ca3;
+            --danger: #ef233c;
+            --danger-bg: rgba(239, 35, 60, 0.08);
+            --danger-border: rgba(239, 35, 60, 0.25);
+            --success: #10b981;
+            --success-bg: rgba(16, 185, 129, 0.08);
+            --success-border: rgba(16, 185, 129, 0.25);
+            --warning: #f59e0b;
+            --card-bg: #ffffff;
+            --page-bg: #f4f7fb;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+        }
+
         body {
-            font-family: 'Roboto', sans-serif;
-            background-color: #f5f7fa;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--page-bg);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding-bottom: 50px;
         }
-        h2, h6 {
-            text-transform: uppercase;
-            font-weight: 700;
+
+        /* Top Navbar */
+        .top-navbar {
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 16px 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
         }
-        .chart-container {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 20px;
+
+        .brand-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: #fff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            font-size: 1.25rem;
+            margin-right: 12px;
         }
-        .chart-card {
-            border: 1px solid #89888875;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+
+        /* KPI Metric Cards */
+        .metric-card {
+            background: var(--card-bg);
+            border-radius: 14px;
+            border: 1px solid #e2e8f0;
+            padding: 22px 24px;
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            position: relative;
             overflow: hidden;
-            margin: 0 10px;
-            width: 48%;
         }
-        .chart-card img {
-            width: 100%;
-            height: auto;
+
+        .metric-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
         }
-        .chart-card h5 {
-            padding: 10px;
-            background-color: #f8f9fa;
-            margin: 0;
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+        }
+
+        .metric-card.total::before { background: var(--primary); }
+        .metric-card.ddos::before { background: var(--danger); }
+        .metric-card.benign::before { background: var(--success); }
+        .metric-card.threat::before { background: var(--warning); }
+
+        .metric-label {
+            font-size: 0.85rem;
+            font-weight: 600;
             text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 6px;
+        }
+
+        .metric-sub {
+            font-size: 0.85rem;
+            color: var(--text-muted);
             font-weight: 500;
         }
-        .download-btn {
-            background: linear-gradient(to right, #007bff, #00d2ff);
-            color: #fff;
-            border: none;
-            padding: 12px 25px;
-            border-radius: 5px;
+
+        /* Threat Level Card */
+        .threat-badge-CRITICAL {
+            background-color: var(--danger-bg);
+            color: var(--danger);
+            border: 1px solid var(--danger-border);
+            padding: 6px 14px;
+            border-radius: 30px;
+            font-weight: 700;
             display: inline-block;
-            font-size: 16px;
-            font-weight: bold;
-            text-decoration: none;
-            margin: 5px;
-            transition: background 0.3s ease;
         }
-        .download-btn:hover {
-            background: linear-gradient(to right, #0056b3, #0091ea);
-            text-decoration: none;
-            color: #000;
+        .threat-badge-ELEVATED {
+            background-color: rgba(245, 158, 11, 0.1);
+            color: #d97706;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            padding: 6px 14px;
+            border-radius: 30px;
+            font-weight: 700;
+            display: inline-block;
         }
-        .btn-group {
+        .threat-badge-NORMAL {
+            background-color: var(--success-bg);
+            color: var(--success);
+            border: 1px solid var(--success-border);
+            padding: 6px 14px;
+            border-radius: 30px;
+            font-weight: 700;
+            display: inline-block;
+        }
+
+        /* Charts & Panels */
+        .dashboard-panel {
+            background: var(--card-bg);
+            border-radius: 14px;
+            border: 1px solid #e2e8f0;
+            padding: 24px;
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+            margin-bottom: 24px;
+        }
+
+        .panel-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-main);
             display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin-top: 15px;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 18px;
         }
-        .center-button {
-            display: flex;
-            justify-content: center;
-            margin-top: 20px;
-            margin-bottom: 20px
+
+        /* Download Action Buttons */
+        .download-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-size: 0.92rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
         }
-        pre {
-            background-color: #f8f9fa;
-            padding: 15px;
-            border-radius: 5px;
+
+        .download-btn-primary {
+            background: #2563eb;
+            color: #ffffff;
+        }
+        .download-btn-primary:hover {
+            background: #1d4ed8;
+            color: #ffffff;
+        }
+
+        .download-btn-danger {
+            background: var(--danger-bg);
+            color: var(--danger);
+            border-color: var(--danger-border);
+        }
+        .download-btn-danger:hover {
+            background: var(--danger);
+            color: #ffffff;
+        }
+
+        .download-btn-success {
+            background: var(--success-bg);
+            color: var(--success);
+            border-color: var(--success-border);
+        }
+        .download-btn-success:hover {
+            background: var(--success);
+            color: #ffffff;
+        }
+
+        /* Table Responsive & Scroll Container */
+        .table-container {
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
             overflow-x: auto;
+            width: 100%;
+            background: #ffffff;
+            -webkit-overflow-scrolling: touch;
         }
-        .text-center.mt-3 {
-            margin-top: 30px; /* Additional space for better look */
+
+        /* Visible styled horizontal scrollbar */
+        .table-container::-webkit-scrollbar {
+            height: 8px;
+        }
+        .table-container::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+        .table-container::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .table-container::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        .table {
+            margin-bottom: 0;
+            font-size: 0.86rem;
+            min-width: 1020px; /* Guarantees all columns and Final Verdict are never squeezed */
+            width: 100%;
+        }
+
+        .table thead th {
+            background: #f8fafc;
+            color: #475569;
+            font-weight: 700;
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #e2e8f0;
+            padding: 12px 14px;
+            white-space: nowrap;
+        }
+
+        .table tbody td {
+            padding: 11px 14px;
+            vertical-align: middle;
+            border-bottom: 1px solid #f1f5f9;
+            white-space: nowrap;
+        }
+
+        .row-ddos {
+            background-color: rgba(239, 35, 60, 0.035);
+        }
+
+        .row-benign {
+            background-color: rgba(16, 185, 129, 0.02);
+        }
+
+        /* Badges */
+        .badge-ddos {
+            background-color: rgba(239, 35, 60, 0.12);
+            color: #d90429;
+            border: 1px solid rgba(239, 35, 60, 0.3);
+            font-weight: 700;
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap;
+        }
+
+        .badge-benign {
+            background-color: rgba(16, 185, 129, 0.12);
+            color: #059669;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            font-weight: 700;
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap;
+        }
+
+        .filter-btn-group .btn {
+            font-size: 0.85rem;
+            font-weight: 600;
+            padding: 6px 14px;
+            border-radius: 6px;
+        }
+
+        /* Pagination Styles */
+        .pagination .page-link {
+            color: var(--primary);
+            border-radius: 6px;
+            margin: 0 2px;
+            font-weight: 600;
+            border: 1px solid #e2e8f0;
+            padding: 6px 12px;
+        }
+
+        .pagination .page-item.active .page-link {
+            background-color: var(--primary);
+            border-color: var(--primary);
+            color: #ffffff;
+        }
+
+        .pagination .page-item.disabled .page-link {
+            color: #94a3b8;
+            background-color: #f8fafc;
+            border-color: #e2e8f0;
         }
     </style>
 </head>
 <body>
-    <div class="container mt-5">
-        <h2 class="text-center mb-4">Prediction Accuracy: {{ accuracy }}</h2>
-        <h6 class="text-center mb-4">Classification Report:</h6>
-        <pre>{{ report }}</pre>
 
-        <div class="chart-container">
-            <div class="chart-card">
-                <h5 class="text-center">Prediction Pie Chart</h5>
-                <img src="{{ url_for('static', filename='prediction_pie_chart.png') }}" alt="Prediction Pie Chart">
+    <!-- Header Navigation -->
+    <header class="top-navbar mb-4">
+        <div class="container-fluid px-4 d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+                <div class="brand-icon">
+                    <i class="bi bi-shield-check"></i>
+                </div>
+                <div>
+                    <h5 class="mb-0 fw-bold">Network Anomaly & DDoS Detection</h5>
+                    <small class="text-muted">Dataset Analyzed: <span class="fw-semibold text-dark">{{ filename }}</span></small>
+                </div>
             </div>
-            <div class="chart-card">
-                <h5 class="text-center">Prediction Bar Chart</h5>
-                <img src="{{ url_for('download_file', filename='prediction_bar_chart.png') }}" alt="Bar Chart">
+            <div>
+                <a href="/" class="btn btn-outline-primary btn-sm px-3 fw-semibold">
+                    <i class="bi bi-arrow-up-circle me-1"></i> Upload Another File
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <div class="container-fluid px-4">
+
+        <!-- KPI Metric Cards Row -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="metric-card total">
+                    <div class="metric-label">Total Flows Analyzed</div>
+                    <div class="metric-value text-primary">{{ total_records }}</div>
+                    <div class="metric-sub"><i class="bi bi-database me-1"></i> Records processed from CSV</div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="metric-card ddos">
+                    <div class="metric-label">DDoS Anomalies Detected</div>
+                    <div class="metric-value text-danger">{{ ddos_count }}</div>
+                    <div class="metric-sub">
+                        <span class="badge bg-danger text-white me-1">{{ ddos_pct }}%</span> of network traffic
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="metric-card benign">
+                    <div class="metric-label">Benign / Normal Traffic</div>
+                    <div class="metric-value text-success">{{ benign_count }}</div>
+                    <div class="metric-sub">
+                        <span class="badge bg-success text-white me-1">{{ benign_pct }}%</span> legitimate flows
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="metric-card threat">
+                    <div class="metric-label">Threat Assessment</div>
+                    <div class="my-2">
+                        <span class="threat-badge-{{ threat_level }}">
+                            <i class="bi bi-shield-exclamation me-1"></i> {{ threat_level }} RISK
+                        </span>
+                    </div>
+                    <div class="metric-sub">{{ threat_desc }}</div>
+                </div>
             </div>
         </div>
 
-        <h2 class="text-center mt-4">Download CSV Files:</h2>
-        <div class="btn-group">
-            <a href="{{ url_for('download_file', filename=ddos_csv) }}" class="download-btn">Download DDoS Predictions CSV</a>
-            <a href="{{ url_for('download_file', filename=benign_csv) }}" class="download-btn">Download BENIGN Predictions CSV</a>
+        <!-- Dynamic Visualization Cards -->
+        <div class="row g-3 mb-4">
+            <div class="col-lg-5">
+                <div class="dashboard-panel h-100">
+                    <div class="panel-title">
+                        <span><i class="bi bi-pie-chart-fill text-primary me-2"></i>Traffic Classification</span>
+                        <small class="text-muted fw-normal">Real-time breakdown</small>
+                    </div>
+                    <div style="height: 240px;" class="position-relative">
+                        <canvas id="trafficDonutChart"></canvas>
+                    </div>
+                    <div class="d-flex justify-content-around mt-3 pt-2 border-top">
+                        <div class="text-center">
+                            <small class="text-muted d-block">Benign Traffic</small>
+                            <span class="fw-bold text-success">{{ benign_count }} ({{ benign_pct }}%)</span>
+                        </div>
+                        <div class="text-center">
+                            <small class="text-muted d-block">DDoS Traffic</small>
+                            <span class="fw-bold text-danger">{{ ddos_count }} ({{ ddos_pct }}%)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-7">
+                <div class="dashboard-panel h-100">
+                    <div class="panel-title">
+                        <span><i class="bi bi-bar-chart-line-fill text-primary me-2"></i>Model Threat Detection Comparison</span>
+                        <small class="text-muted fw-normal">DDoS detections by model</small>
+                    </div>
+                    <div style="height: 240px;">
+                        <canvas id="modelBarChart"></canvas>
+                    </div>
+                    <div class="d-flex justify-content-around mt-3 pt-2 border-top">
+                        <div class="text-center">
+                            <small class="text-muted d-block">Random Forest Flagged</small>
+                            <span class="fw-bold text-primary">{{ rf_ddos_count }} flows</span>
+                        </div>
+                        <div class="text-center">
+                            <small class="text-muted d-block">SVM Flagged</small>
+                            <span class="fw-bold text-info">{{ svm_ddos_count }} flows</span>
+                        </div>
+                        <div class="text-center">
+                            <small class="text-muted d-block">Ensemble Consensus</small>
+                            <span class="fw-bold text-danger">{{ ddos_count }} flows</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div class="center-button">
-            <a href="/" class="btn btn-primary mt-3">Upload Another File</a>
+        <!-- Export Data Section -->
+        <div class="dashboard-panel mb-4">
+            <div class="panel-title">
+                <span><i class="bi bi-download text-primary me-2"></i>Export Results & Classified Data</span>
+                <span class="badge bg-light text-secondary border">CSV Exports</span>
+            </div>
+            <p class="text-muted small mb-3">Download the processed datasets with added prediction classifications (`Ensemble_Prediction`, `RF_Prediction`, `SVM_Prediction`) for reporting or auditing:</p>
+            <div class="d-flex flex-wrap gap-2">
+                <a href="{{ url_for('download_file', filename=all_csv) }}" class="download-btn download-btn-primary" id="btnDownloadAll">
+                    <i class="bi bi-file-earmark-spreadsheet"></i> Download Complete Classified CSV ({{ total_records }} rows)
+                </a>
+                <a href="{{ url_for('download_file', filename=ddos_csv) }}" class="download-btn download-btn-danger" id="btnDownloadDDoS">
+                    <i class="bi bi-exclamation-triangle"></i> Download DDoS Threats Only ({{ ddos_count }} rows)
+                </a>
+                <a href="{{ url_for('download_file', filename=benign_csv) }}" class="download-btn download-btn-success" id="btnDownloadBenign">
+                    <i class="bi bi-check-circle"></i> Download Benign Traffic Only ({{ benign_count }} rows)
+                </a>
+            </div>
         </div>
+
+        <!-- Real Data Records Table with Pagination & Smooth Scroll -->
+        <div class="dashboard-panel">
+            <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+                <div>
+                    <h5 class="fw-bold mb-1"><i class="bi bi-table text-primary me-2"></i>Processed Data Records</h5>
+                    <span class="badge bg-light text-muted border" id="previewBadge">
+                        Loaded {{ preview_count }} sample flows (Total: {{ total_records }})
+                    </span>
+                </div>
+
+                <div class="d-flex flex-wrap gap-2 align-items-center">
+                    <!-- Filter Buttons -->
+                    <div class="btn-group filter-btn-group" role="group">
+                        <button type="button" class="btn btn-primary active" id="filterAll" onclick="filterTable('ALL')">All Flows</button>
+                        <button type="button" class="btn btn-outline-danger" id="filterDDoS" onclick="filterTable('DDoS')">DDoS Only</button>
+                        <button type="button" class="btn btn-outline-success" id="filterBenign" onclick="filterTable('BENIGN')">Benign Only</button>
+                    </div>
+
+                    <!-- Search Input -->
+                    <div class="input-group input-group-sm" style="width: 220px;">
+                        <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                        <input type="text" class="form-control" id="tableSearch" placeholder="Search port/protocol..." onkeyup="searchTable()">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Scrollable Table Container -->
+            <div class="table-container">
+                <table class="table table-hover align-middle" id="resultsDataTable">
+                    <thead>
+                        <tr>
+                            <th style="width: 50px;">#</th>
+                            <th>Source Port</th>
+                            <th>Destination Port</th>
+                            <th>Protocol</th>
+                            <th>Flow Duration</th>
+                            <th>Fwd Packets</th>
+                            <th>Bwd Packets</th>
+                            <th>Total Fwd Length</th>
+                            <th>RF Model</th>
+                            <th>SVM Model</th>
+                            <th style="min-width: 150px;">Final Verdict</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in table_rows %}
+                        <tr class="data-row {% if row.prediction == 'DDoS' %}row-ddos{% else %}row-benign{% endif %}" data-prediction="{{ row.prediction }}">
+                            <td class="text-muted fw-semibold">{{ row.id }}</td>
+                            <td><span class="badge bg-light text-dark border">{{ row.src_port }}</span></td>
+                            <td><span class="badge bg-light text-dark border">{{ row.dst_port }}</span></td>
+                            <td><span class="fw-medium">{{ row.protocol }}</span></td>
+                            <td class="text-muted font-monospace small">{{ row.duration }}</td>
+                            <td>{{ row.fwd_pkts }}</td>
+                            <td>{{ row.bwd_pkts }}</td>
+                            <td class="text-muted font-monospace small">{{ row.fwd_len }}</td>
+                            <td>
+                                {% if row.rf_pred == 'DDoS' %}
+                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle">DDoS</span>
+                                {% else %}
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle">BENIGN</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if row.svm_pred == 'DDoS' %}
+                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle">DDoS</span>
+                                {% else %}
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle">BENIGN</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if row.prediction == 'DDoS' %}
+                                    <span class="badge-ddos"><i class="bi bi-shield-x"></i> DDoS Attack</span>
+                                {% else %}
+                                    <span class="badge-benign"><i class="bi bi-shield-check"></i> BENIGN</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination & Row Count Footer -->
+            <div class="d-flex flex-wrap justify-content-between align-items-center mt-3 pt-3 border-top gap-3">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="text-muted small">Show</span>
+                    <select class="form-select form-select-sm" id="rowsPerPageSelect" style="width: 80px;" onchange="changeRowsPerPage(this.value)">
+                        <option value="10" selected>10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                    <span class="text-muted small" id="paginationInfo">Loading entries...</span>
+                </div>
+
+                <nav aria-label="Table pagination">
+                    <ul class="pagination pagination-sm mb-0" id="paginationNav">
+                        <!-- Dynamically filled by JavaScript -->
+                    </ul>
+                </nav>
+            </div>
+        </div>
+
     </div>
+
+    <!-- Client-Side Chart.js Rendering & Dynamic Table Pagination -->
+    <script>
+        const ddosCount = {{ ddos_count_raw }};
+        const benignCount = {{ benign_count_raw }};
+        const rfDdos = {{ rf_ddos_count }};
+        const svmDdos = {{ svm_ddos_count }};
+
+        // 1. Donut Chart: Traffic Classification
+        const ctxDonut = document.getElementById('trafficDonutChart').getContext('2d');
+        new Chart(ctxDonut, {
+            type: 'doughnut',
+            data: {
+                labels: ['Benign / Normal', 'DDoS Attack'],
+                datasets: [{
+                    data: [benignCount, ddosCount],
+                    backgroundColor: ['#10b981', '#ef233c'],
+                    hoverBackgroundColor: ['#059669', '#d90429'],
+                    borderWidth: 2,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            font: { family: "'Plus Jakarta Sans', sans-serif", weight: '600' },
+                            padding: 16
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const total = benignCount + ddosCount;
+                                const val = context.raw;
+                                const pct = total > 0 ? ((val / total) * 100).toFixed(1) : 0;
+                                return ` ${context.label}: ${val.toLocaleString()} (${pct}%)`;
+                            }
+                        }
+                    }
+                },
+                cutout: '70%'
+            }
+        });
+
+        // 2. Bar Chart: Model Comparison
+        const ctxBar = document.getElementById('modelBarChart').getContext('2d');
+        new Chart(ctxBar, {
+            type: 'bar',
+            data: {
+                labels: ['Random Forest', 'SVM (Chunked)', 'Ensemble Consensus'],
+                datasets: [{
+                    label: 'DDoS Flows Detected',
+                    data: [rfDdos, svmDdos, ddosCount],
+                    backgroundColor: ['#3b82f6', '#06b6d4', '#ef233c'],
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: '#f1f5f9' },
+                        ticks: { font: { family: "'Plus Jakarta Sans', sans-serif" } }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { font: { family: "'Plus Jakarta Sans', sans-serif", weight: '600' } }
+                    }
+                }
+            }
+        });
+
+        // 3. Dynamic Table Pagination, Filtering, and Search
+        let currentFilter = 'ALL';
+        let currentPage = 1;
+        let rowsPerPage = 10;
+        const allRows = Array.from(document.querySelectorAll('#resultsDataTable tbody tr'));
+        let matchingRows = [...allRows];
+
+        function changeRowsPerPage(val) {
+            rowsPerPage = parseInt(val, 10);
+            currentPage = 1;
+            renderPagination();
+        }
+
+        function filterTable(type) {
+            currentFilter = type;
+            document.getElementById('filterAll').className = 'btn ' + (type === 'ALL' ? 'btn-primary active' : 'btn-outline-primary');
+            document.getElementById('filterDDoS').className = 'btn ' + (type === 'DDoS' ? 'btn-danger active' : 'btn-outline-danger');
+            document.getElementById('filterBenign').className = 'btn ' + (type === 'BENIGN' ? 'btn-success active' : 'btn-outline-success');
+            currentPage = 1;
+            applyFilters();
+        }
+
+        function searchTable() {
+            currentPage = 1;
+            applyFilters();
+        }
+
+        function applyFilters() {
+            const searchTerm = document.getElementById('tableSearch').value.toLowerCase().trim();
+
+            matchingRows = allRows.filter(row => {
+                const pred = row.getAttribute('data-prediction');
+                const rowText = row.innerText.toLowerCase();
+
+                const matchesFilter = (currentFilter === 'ALL') || (pred === currentFilter);
+                const matchesSearch = searchTerm === '' || rowText.includes(searchTerm);
+
+                return matchesFilter && matchesSearch;
+            });
+
+            renderPagination();
+        }
+
+        function goToPage(page) {
+            currentPage = page;
+            renderPagination();
+        }
+
+        function renderPagination() {
+            const totalMatching = matchingRows.length;
+            const totalPages = Math.max(1, Math.ceil(totalMatching / rowsPerPage));
+
+            if (currentPage > totalPages) currentPage = totalPages;
+            if (currentPage < 1) currentPage = 1;
+
+            // Hide all rows
+            allRows.forEach(r => r.style.display = 'none');
+
+            // Calculate start and end indices
+            const startIndex = (currentPage - 1) * rowsPerPage;
+            const endIndex = Math.min(startIndex + rowsPerPage, totalMatching);
+
+            // Display active page rows
+            for (let i = startIndex; i < endIndex; i++) {
+                matchingRows[i].style.display = '';
+            }
+
+            // Update footer text
+            const infoEl = document.getElementById('paginationInfo');
+            if (totalMatching === 0) {
+                infoEl.innerText = 'No matching flows found';
+            } else {
+                infoEl.innerText = `Showing ${startIndex + 1} to ${endIndex} of ${totalMatching} flows`;
+            }
+
+            // Render pagination controls
+            const navEl = document.getElementById('paginationNav');
+            navEl.innerHTML = '';
+
+            // Previous Button
+            const prevLi = document.createElement('li');
+            prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+            prevLi.innerHTML = `<a class="page-link" href="javascript:void(0)" onclick="goToPage(${currentPage - 1})">‹ Prev</a>`;
+            navEl.appendChild(prevLi);
+
+            // Calculate sliding window of page numbers
+            let startPage = Math.max(1, currentPage - 2);
+            let endPage = Math.min(totalPages, startPage + 4);
+            if (endPage - startPage < 4) {
+                startPage = Math.max(1, endPage - 4);
+            }
+
+            // First page + dots if needed
+            if (startPage > 1) {
+                const firstLi = document.createElement('li');
+                firstLi.className = 'page-item';
+                firstLi.innerHTML = `<a class="page-link" href="javascript:void(0)" onclick="goToPage(1)">1</a>`;
+                navEl.appendChild(firstLi);
+
+                if (startPage > 2) {
+                    const dotsLi = document.createElement('li');
+                    dotsLi.className = 'page-item disabled';
+                    dotsLi.innerHTML = `<span class="page-link">...</span>`;
+                    navEl.appendChild(dotsLi);
+                }
+            }
+
+            // Numeric page buttons
+            for (let p = startPage; p <= endPage; p++) {
+                const pageLi = document.createElement('li');
+                pageLi.className = `page-item ${p === currentPage ? 'active' : ''}`;
+                pageLi.innerHTML = `<a class="page-link" href="javascript:void(0)" onclick="goToPage(${p})">${p}</a>`;
+                navEl.appendChild(pageLi);
+            }
+
+            // Last page + dots if needed
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                    const dotsLi = document.createElement('li');
+                    dotsLi.className = 'page-item disabled';
+                    dotsLi.innerHTML = `<span class="page-link">...</span>`;
+                    navEl.appendChild(dotsLi);
+                }
+                const lastLi = document.createElement('li');
+                lastLi.className = 'page-item';
+                lastLi.innerHTML = `<a class="page-link" href="javascript:void(0)" onclick="goToPage(${totalPages})">${totalPages}</a>`;
+                navEl.appendChild(lastLi);
+            }
+
+            // Next Button
+            const nextLi = document.createElement('li');
+            nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+            nextLi.innerHTML = `<a class="page-link" href="javascript:void(0)" onclick="goToPage(${currentPage + 1})">Next ›</a>`;
+            navEl.appendChild(nextLi);
+        }
+
+        // Initialize pagination on initial load
+        applyFilters();
+    </script>
 </body>
 </html>

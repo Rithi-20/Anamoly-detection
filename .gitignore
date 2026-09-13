@@ -1,0 +1,36 @@
+# Python virtual environments
+myenv/
+venv/
+env/
+.venv/
+ENV/
+
+# Python bytecode and cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# IDE / Editor configuration
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+.project
+.pydevproject
+
+# Operating System artifacts
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Flask & Dynamic outputs (generated prediction CSVs)
+Temp/
+temp/
+static/predictions_*.csv
+instance/
+.webassets-cache
+
+# Log files
+*.log

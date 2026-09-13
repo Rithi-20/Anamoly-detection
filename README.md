@@ -25,22 +25,60 @@ This application provides automated, real-time threat detection on network traff
 
 ## Architecture and Workflow
 
-```mermaid
-flowchart TD
-    A["User Uploads Network CSV"] --> B["Flask Web Server (app.py)"]
-    B --> C["51-Feature Alignment & Data Cleaning"]
-    C --> D["Feature Scaling (scaler.pkl)"]
-    D --> E1["Random Forest Classifier"]
-    D --> E2["SVM Classifier (Multi-Threaded)"]
-    E1 --> F["Ensemble Consensus Voting Engine"]
-    E2 --> F
-    F --> G["Classification: DDoS vs BENIGN"]
-    G --> H1["Compute Analytics & Threat Rating"]
-    G --> H2["Export Classified CSV Files"]
-    G --> H3["Render Data Table Preview"]
-    H1 --> I["Interactive Dashboard (results.html)"]
-    H2 --> I
-    H3 --> I
+```
++-----------------------------------------------------------------------+
+|                    1. Client Upload (CSV File)                        |
++-----------------------------------┬-----------------------------------+
+                                    |
+                                    v
++-----------------------------------------------------------------------+
+|                       2. Flask Web Application                        |
+|                  - Align 51 network traffic features                  |
+|                  - Clean infinite and missing values                  |
++-----------------------------------┬-----------------------------------+
+                                    |
+                                    v
++-----------------------------------------------------------------------+
+|                 3. Feature Scaling (scaler.pkl)                       |
+|           Normalize all 51 features to [0, 1] range                   |
++-----------------------------------┬-----------------------------------+
+                                    |
+                 +------------------+------------------+
+                 |                                     |
+                 v                                     v
++--------------------------------+   +----------------------------------+
+|   Random Forest Classifier     |   |          SVM Classifier          |
+|      (100 Decision Trees)      |   |       (Multi-Threaded RBF)       |
++----------------┬---------------+   +-----------------┬----------------+
+                 |                                     |
+                 +------------------+------------------+
+                                    |
+                                    v
++-----------------------------------------------------------------------+
+|                 4. Ensemble Consensus Voting Engine                   |
+|                  Rule: (RF Flag + SVM Flag) >= 1                      |
++-----------------------------------┬-----------------------------------+
+                                    |
+                                    v
++-----------------------------------------------------------------------+
+|                 5. Final Traffic Classification                       |
+|                     DDoS Attack  vs.  BENIGN                          |
++-----------------------------------┬-----------------------------------+
+                                    |
+        +---------------------------+---------------------------+
+        |                           |                           |
+        v                           v                           v
++-------------------+     +--------------------+     +------------------+
+|  KPI Analytics &  |     |   Export CSVs to   |     | Interactive Data |
+|   Threat Rating   |     |       Temp/        |     |  Records Table   |
++---------┬---------+     +----------┬---------+     +---------┬--------+
+          |                          |                         |
+          +--------------------------+-------------------------+
+                                     |
+                                     v
++-----------------------------------------------------------------------+
+|              6. Interactive Web Dashboard (results.html)              |
++-----------------------------------------------------------------------+
 ```
 
 ---
